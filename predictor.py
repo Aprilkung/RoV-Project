@@ -8,19 +8,24 @@ class RoVDraftRecommender:
         self.df_syn = pd.read_csv("synergy.csv")
         self.df_ctr = pd.read_csv("counter.csv")
 
-    # 1. แก้ฟังก์ชันนี้ให้ส่งค่า matches กลับมาด้วยเพื่อไปทำ Pop Score
-    def get_bayesian_base_wr(self, hero, C=20, m=0.45): # ใช้ m=0.45 (สมอดึงตัวแปลกๆ ลง)
+        # Total_Presence
+        if 'Bans' in self.df_base.columns:
+            self.df_base['Total_Presence'] = self.df_base['Matches'] + self.df_base['Bans']
+        else:
+            self.df_base['Total_Presence'] = self.df_base['Matches']
+
+    def get_bayesian_base_wr(self, hero, C=20, m=0.45): 
         row = self.df_base[self.df_base['Hero'] == hero]
         if row.empty:
             return m, 0.0
             
         matches = row['Matches'].values[0]
         wr = row['WinRate'].values[0]
+        presence = row['Total_Presence'].values[0] # ดึงค่าการมีส่วนร่วมรวม
         
         adjusted_wr = ((C * m) + (matches * wr)) / (C + matches)
-        return adjusted_wr, float(matches)
+        return adjusted_wr, float(presence)
 
-    # 2. ฟังก์ชันจับคู่ (ใช้ None ดักทางบัก 1.0 - Counter แบบที่เราเคยคุยกัน)
     def get_pair_score(self, df, col_name, pair_name):
         row = df[df[col_name] == pair_name]
         if row.empty:
@@ -39,28 +44,25 @@ class RoVDraftRecommender:
         num_allies = len(allies)
         num_enemies = len(enemies)
         
-        # --- ระบบ Fixed Weights (ค่าคงที่ที่แก้ไขง่ายมากในอนาคต) ---
         w_base = 0.20
         w_pop = 0.20
         w_syn = 0.20
         w_ctr = 0.20
         w_mas = 0.20
         
-        # หา Max Matches ของแพตช์นี้ เพื่อเอามาเป็นเกณฑ์ Pop Score
-        max_matches = self.df_base['Matches'].max() if not self.df_base.empty else 1.0
+        max_presence = self.df_base['Total_Presence'].max() if not self.df_base.empty else 1.0
 
         results = []
         
-        # loop heroes roles
         for hero, roles in hero_roles.items():
             if my_role not in roles: continue
             if hero in allies or hero in enemies or hero in ban_list: continue
             
-            # --- เริ่มคำนวณแต่ละตัวแปร ---
-            
-            # 1 & 2. Base Score & Pop Score
-            base_score, matches = self.get_bayesian_base_wr(hero)
-            pop_score = min(matches / max_matches, 1.0)
+            # 1. Base Score
+            base_score, presence = self.get_bayesian_base_wr(hero)
+
+            # 2. Pop Score
+            pop_score = min(presence / max_presence, 1.0)
             
             # 3. Synergy Score
             syn_score = 0.0
@@ -69,7 +71,7 @@ class RoVDraftRecommender:
                 for ally in allies:
                     pair = "-".join(sorted([hero, ally]))
                     score = self.get_pair_score(self.df_syn, 'Hero_Pair', pair)
-                    total_syn += score if score is not None else 0.46 # 0.46 คือ Penalty ตัวหลุดเมต้า
+                    total_syn += score if score is not None else 0.46
                 syn_score = total_syn / num_allies
                 
             # 4. Counter Score
@@ -90,13 +92,12 @@ class RoVDraftRecommender:
             # 5. Mastery Score
             mas_score = mastery_dict.get(hero, 0.0)
             
-            # --- ระบบ Normalize น้ำหนัก (ลบ if-else ทิ้งอย่างสมบูรณ์) ---
-            active_weight = w_base + w_pop  # Base กับ Pop ต้องใช้เสมอ
+            # Normalize Weights
+            active_weight = w_base + w_pop  
             if num_allies > 0: active_weight += w_syn
             if num_enemies > 0: active_weight += w_ctr
-            if mastery_dict: active_weight += w_mas # ถ้ามีข้อมูลความถนัดส่งมา ค่อยเปิดใช้งาน
+            if mastery_dict: active_weight += w_mas 
             
-            # สมการ Final Score (คะแนนดิบ / น้ำหนักที่ใช้จริง)
             raw_score = (w_base * base_score) + (w_pop * pop_score) + (w_syn * syn_score) + (w_ctr * ctr_score) + (w_mas * mas_score)
             
             final_score = raw_score / active_weight if active_weight > 0 else 0.0
@@ -112,7 +113,7 @@ class RoVDraftRecommender:
             
         # sorting
         results_sorted = sorted(results, key=lambda x: x["FinalScore"], reverse=True)
-        return results_sorted[:3]  # ส่งคืนแค่ Top 3
+        return results_sorted[:3]
 
 # Testing
 if __name__ == "__main__":
@@ -123,7 +124,6 @@ if __name__ == "__main__":
     enemy_team = []
     ban_list = ["kilgroth", "lubu", "omen","billow","tachi"]
     
-    # ลองส่ง empty dict ไปดูครับ ระบบจะฉลาดพอที่จะ "ปิด" ตัวแปร Mastery ไปเอง
     my_mastery = {}
     
     print(f"\n--- Top 3 Recommendations for {my_role} ---")
