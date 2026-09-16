@@ -119,8 +119,8 @@ if __name__ == "__main__":
     recommender = RoVDraftRecommender()
     
     my_role = "roaming"
-    my_team = ["dolia", "valhein", "krixi", "florentino"] 
-    enemy_team = ["zata", "nakroth", "azzenka", "maloch","flowborn"]
+    my_team = [] 
+    enemy_team = []
     ban_list = ["kilgroth", "lubu", "omen","billow","tachi"]
     
     # ลองส่ง empty dict ไปดูครับ ระบบจะฉลาดพอที่จะ "ปิด" ตัวแปร Mastery ไปเอง
