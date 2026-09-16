@@ -2,7 +2,7 @@
 # offlane , jungle , midlane , carry , roaming
 
 hero_roles = {
-    # --- กลุ่ม DS Lane (ออฟเลน) ---
+    
     "airi": ["ds_lane"],
     "aoi": ["jungle"],
     "bright": ["jungle"],

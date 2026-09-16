@@ -6,7 +6,7 @@ def fetch_tournament_stats():
     api_url = "https://liquipedia.net/honorofkings/api.php"
     
     headers = {
-        'User-Agent': 'RoVDraftRecommender/1.0 (Discord: https://discord.gg/wJJ2Ttuu)'
+        'User-Agent': 'RoVDraftRecommender/1.0 (Discord: https://github.com/Aprilkung/RoV-Project)'
     }
     
     # Tournament Pages to Fetch
@@ -68,7 +68,7 @@ def fetch_tournament_stats():
         else:
             print(f" -> Fails Https: {response.status_code}\n")
             
-        time.sleep(2)
+        time.sleep(5)
 
     # Json Save
     filename = "all_tournaments_raw.json"
