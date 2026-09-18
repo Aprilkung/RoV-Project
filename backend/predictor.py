@@ -1,12 +1,18 @@
+import os
 import pandas as pd
 from hero_dictionary import hero_roles
 
 class RoVDraftRecommender:
     def __init__(self):
         print("Loading Recommender...")
-        self.df_base = pd.read_csv("base_winrate.csv")
-        self.df_syn = pd.read_csv("synergy.csv")
-        self.df_ctr = pd.read_csv("counter.csv")
+        
+        # --- ค้นหา Path โฟลเดอร์ data ---
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        data_dir = os.path.join(os.path.dirname(current_dir), "data")
+        
+        self.df_base = pd.read_csv(os.path.join(data_dir, "base_winrate.csv"))
+        self.df_syn = pd.read_csv(os.path.join(data_dir, "synergy.csv"))
+        self.df_ctr = pd.read_csv(os.path.join(data_dir, "counter.csv"))
 
         # Total_Presence
         if 'Bans' in self.df_base.columns:
@@ -21,7 +27,7 @@ class RoVDraftRecommender:
             
         matches = row['Matches'].values[0]
         wr = row['WinRate'].values[0]
-        presence = row['Total_Presence'].values[0] # ดึงค่าการมีส่วนร่วมรวม
+        presence = row['Total_Presence'].values[0] 
         
         adjusted_wr = ((C * m) + (matches * wr)) / (C + matches)
         return adjusted_wr, float(presence)
@@ -45,9 +51,9 @@ class RoVDraftRecommender:
         num_enemies = len(enemies)
         
         w_base = 0.20
-        w_pop = 0.20
-        w_syn = 0.20
-        w_ctr = 0.20
+        w_pop = 0.10
+        w_syn = 0.25
+        w_ctr = 0.25
         w_mas = 0.20
         
         max_presence = self.df_base['Total_Presence'].max() if not self.df_base.empty else 1.0
@@ -119,10 +125,10 @@ class RoVDraftRecommender:
 if __name__ == "__main__":
     recommender = RoVDraftRecommender()
     
-    my_role = "roaming"
-    my_team = [] 
-    enemy_team = []
-    ban_list = ["kilgroth", "lubu", "omen","billow","tachi"]
+    my_role = "jungle"
+    my_team = ["marja","violet","thane"] 
+    enemy_team = ["tachi","zata"]
+    ban_list = ["astrid", "valhein", "annette","liliana" , "hayate" , "rouie" ,"tamyn" ,"ryoma"]
     
     my_mastery = {}
     

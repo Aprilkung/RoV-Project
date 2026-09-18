@@ -1,21 +1,21 @@
 import json
 import re
 import pandas as pd
+import os
 
 def extract_rov_matches_from_json(file_path):
-    # 1. เปิดไฟล์ JSON
+
     with open(file_path, "r", encoding="utf-8") as f:
         raw_data_list = json.load(f)
 
     dataset = []
 
-    # 2. วนลูปอ่านข้อมูลทีละทัวร์นาเมนต์
+    # loop data
     for tournament_data in raw_data_list:
         t_name = tournament_data['tournament']
         t_weight = tournament_data['time_weight']
         wikitext = tournament_data['wikitext']
 
-        # 3. ใช้ลอจิกเดิมของคุณ Split text ของทัวร์นาเมนต์นั้นๆ
         games_raw = wikitext.split("{{Map|")[1:] 
 
         for game in games_raw:
@@ -67,16 +67,17 @@ def extract_rov_matches_from_json(file_path):
 
 if __name__ == "__main__":
 
-    file_name = "all_tournaments_raw.json" 
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(os.path.dirname(current_dir), "data")
+    
+    file_name = os.path.join(data_dir, "all_tournaments_raw.json")
     
     print("Loading and Cleaning Data...")
     df = extract_rov_matches_from_json(file_name)
     
-    # ดูตัวอย่างคอลัมน์ว่ามาครบไหม
     print(df[['Tournament', 'Time_Weight', 'Winner', 'T1_Pick1']].head())
     print(f"\nComplete: {len(df)} matchs")
     
-    # CSV
-    output_name = "rov_dataset_cleaned.csv"
+    output_name = os.path.join(data_dir, "rov_dataset_cleaned.csv")
     df.to_csv(output_name, index=False)
     print(f"Saving '{output_name}' complete")

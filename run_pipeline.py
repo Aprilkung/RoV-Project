@@ -16,13 +16,14 @@ if __name__ == "__main__":
     print("="*50)
     
     run_script("fetch_data.py")
-    time.sleep(1)
+    time.sleep(5)
     
     run_script("cleaning_data.py")
-    time.sleep(1)
+    time.sleep(5)
     
     run_script("calculate_stats.py")
-    
+    time.sleep(5)
+
     print("\n" + "="*50)
     print("Complete All Scripts")
     print("="*50)

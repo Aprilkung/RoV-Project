@@ -1,30 +1,27 @@
 import requests
 import time
 import json
+import os
 
 def fetch_tournament_stats():
     api_url = "https://liquipedia.net/honorofkings/api.php"
     
     headers = {
-        'User-Agent': 'RoVDraftRecommender/1.0 (Discord: https://github.com/Aprilkung/RoV-Project)'
+        'User-Agent': 'RoVDraftRecommender/1.0 (Contact: https://github.com/Aprilkung/RoV-Project)'
     }
     
     # Tournament Pages to Fetch
     tournaments = [
-        # --- 1st Newest ---
         "RoV_Pro_League/2026/Winter/Playoffs",      
         "RoV_Pro_League/2026/Winter/Group_Stage",   
-        
-        # --- 2nd Newest ---
+
         "Arena_of_Valor_Premier_League/2026/Playoffs",
         "Arena_of_Valor_Premier_League/2026/Swiss_Stage", 
         "Arena_of_Valor_Premier_League/2026/Wildcard",
-        
-        # --- 3rd Newest ---
+
         "RoV_Pro_League/2026/Summer/Playoffs",
         "RoV_Pro_League/2026/Summer/Group_Stage",
         
-        # --- 4th Oldest ---
         "Arena_of_Valor_International_Championship/2025/Knockout_Stage",
         "Arena_of_Valor_International_Championship/2025/Group_Stage"
     ]
@@ -70,8 +67,11 @@ def fetch_tournament_stats():
             
         time.sleep(5)
 
-    # Json Save
-    filename = "all_tournaments_raw.json"
+    # --- ระบบค้นหา Path แบบฉลาด ---
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(os.path.dirname(current_dir), "data")
+    filename = os.path.join(data_dir, "all_tournaments_raw.json")
+    
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(all_raw_data, f, ensure_ascii=False, indent=4)
         

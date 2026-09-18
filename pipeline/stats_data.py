@@ -1,22 +1,24 @@
+import os
 import pandas as pd
 from itertools import combinations
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(os.path.dirname(current_dir), "data")
+
 def calculate_heuristic_stats(input_file):
-    print("Loading file...", input_file)
-    df = pd.read_csv(input_file)
+    input_path = os.path.join(data_dir, input_file)
+    print("Loading file...", input_path)
+    df = pd.read_csv(input_path)
     
     # Dictionary
     base_stats = {}
     synergy_stats = {}
     counter_stats = {}
     
-    # 1. แก้ไข stat func ให้รับค่า weight (Time Decay)
     def add_stat(stat_dict, key, is_win, weight):
         if key not in stat_dict:
-            # เปลียนจาก 0 เป็น 0.0 เพื่อรองรับทศนิยม
             stat_dict[key] = {'match': 0.0, 'win': 0.0}
             
-        # บวกด้วยค่า weight แทนการบวก 1
         stat_dict[key]['match'] += weight
         if is_win:
             stat_dict[key]['win'] += weight
@@ -25,8 +27,6 @@ def calculate_heuristic_stats(input_file):
     
     for index, row in df.iterrows():
         winner = row['Winner']
-        
-        # 2. ดึงค่า Time_Weight ออกมาจากข้อมูลแต่ละแถว
         weight = float(row['Time_Weight'])
         
         t1_picks = [str(row[f'T1_Pick{i}']).strip() for i in range(1, 6)]
@@ -37,10 +37,8 @@ def calculate_heuristic_stats(input_file):
 
         # --- T1 Stats ---
         for hero in t1_picks:
-            # 3. โยนค่า weight เข้าไปในทุกๆ การคำนวณ
             add_stat(base_stats, hero, t1_win, weight) 
             
-            # Counter Stats
             for enemy in t2_picks:
                 if hero < enemy:
                     add_stat(counter_stats, f"{hero}_vs_{enemy}", t1_win, weight)
@@ -59,15 +57,12 @@ def calculate_heuristic_stats(input_file):
             pair_name = "-".join(sorted([hero_a, hero_b]))
             add_stat(synergy_stats, pair_name, t2_win, weight)
 
-    # --- ฟังก์ชันแปลง Dictionary เป็น DataFrame และคำนวณ Win Rate ---
+    # Data Frame
     def make_dataframe(stat_dict, name_col):
         data_list = []
         for name, stats in stat_dict.items():
-            # ปัดเศษทศนิยมให้ดูสวยงาม (Effective Matches/Wins)
             matches = round(stats['match'], 2)
             wins = round(stats['win'], 2)
-            
-            # ป้องกัน Error กรณี match เป็น 0 (แม้จะแทบเป็นไปไม่ได้)
             win_rate = round(wins / matches, 4) if matches > 0 else 0.0
             
             data_list.append({
@@ -79,13 +74,13 @@ def calculate_heuristic_stats(input_file):
         return pd.DataFrame(data_list).sort_values(by='Matches', ascending=False)
 
     df_base = make_dataframe(base_stats, 'Hero')
-    df_base.to_csv("base_winrate.csv", index=False)
+    df_base.to_csv(os.path.join(data_dir, "base_winrate.csv"), index=False)
     
     df_synergy = make_dataframe(synergy_stats, 'Hero_Pair')
-    df_synergy.to_csv("synergy.csv", index=False)
+    df_synergy.to_csv(os.path.join(data_dir, "synergy.csv"), index=False)
     
     df_counter = make_dataframe(counter_stats, 'Ally_vs_Enemy')
-    df_counter.to_csv("counter.csv", index=False)
+    df_counter.to_csv(os.path.join(data_dir, "counter.csv"), index=False)
     
     print("Complete 3 Files")
 
